@@ -1,0 +1,4 @@
+node_modules/
+maintenance.db
+google-credentials.json
+.claude/

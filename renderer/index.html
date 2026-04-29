@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maintenance Tracker</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-header-top">
+          <h1>🔧 Maintenance Tracker</h1>
+          <button class="btn-settings" id="btn-settings" title="Settings">&#9881;</button>
+        </div>
+        <button class="btn btn-primary" id="btn-add-vehicle">+ Add Vehicle</button>
+      </div>
+      <ul id="vehicle-list"></ul>
+      <div class="sidebar-footer">
+        <div id="google-status"></div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main id="main">
+      <div id="empty-state" class="empty-state hidden">
+        <div class="empty-icon">🚗</div>
+        <h2>No vehicle selected</h2>
+        <p>Add a vehicle from the sidebar to get started.</p>
+      </div>
+      <div id="vehicle-detail" class="hidden">
+        <div class="detail-header">
+          <div>
+            <h2 id="detail-title"></h2>
+            <p id="detail-subtitle" class="muted"></p>
+          </div>
+          <div class="detail-actions">
+            <button class="btn btn-calendar hidden" id="btn-sync-calendar">Sync to Calendar</button>
+            <button class="btn btn-outline" id="btn-edit-vehicle">Edit</button>
+            <button class="btn btn-danger-outline" id="btn-delete-vehicle">Delete</button>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab active" data-tab="upcoming">Upcoming Services</button>
+          <button class="tab" data-tab="history">Service History</button>
+          <button class="tab" data-tab="calendar">Calendar</button>
+        </div>
+
+        <!-- Upcoming -->
+        <div id="tab-upcoming" class="tab-content">
+          <div class="section-header">
+            <p class="muted" id="mpd-label"></p>
+            <button class="btn btn-primary" id="btn-log-service">+ Log Service</button>
+          </div>
+          <div id="upcoming-grid"></div>
+        </div>
+
+        <!-- History -->
+        <div id="tab-history" class="tab-content hidden">
+          <div class="section-header">
+            <p class="muted">All recorded services for this vehicle.</p>
+            <button class="btn btn-primary" id="btn-log-service-2">+ Log Service</button>
+          </div>
+          <div id="history-table-wrap">
+            <table id="history-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Service</th>
+                  <th>Mileage</th>
+                  <th>Notes</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody"></tbody>
+            </table>
+            <p id="history-empty" class="empty-inline hidden">No services logged yet.</p>
+          </div>
+        </div>
+        <!-- Calendar -->
+        <div id="tab-calendar" class="tab-content hidden">
+          <div class="cal-toolbar">
+            <div class="cal-nav">
+              <button class="btn btn-outline cal-nav-btn" id="cal-prev">&#8249;</button>
+              <span id="cal-month-label" class="cal-month-label"></span>
+              <button class="btn btn-outline cal-nav-btn" id="cal-next">&#8250;</button>
+            </div>
+            <button class="btn btn-outline" id="btn-export-ics">Export .ics</button>
+          </div>
+          <div id="cal-grid" class="cal-grid"></div>
+          <div id="cal-day-events" class="cal-day-events hidden"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: Add/Edit Vehicle -->
+  <div id="modal-vehicle" class="modal hidden">
+    <div class="modal-box modal-box-lg">
+      <h3 id="modal-vehicle-title">Add Vehicle</h3>
+      <form id="form-vehicle">
+        <label>Nickname (optional)
+          <input type="text" name="name" placeholder="e.g. My Truck" />
+        </label>
+        <label>Year <span class="required">*</span>
+          <input type="number" name="year" min="1900" max="2100" required />
+        </label>
+        <label>Make <span class="required">*</span>
+          <input type="text" name="make" placeholder="e.g. Ford" required />
+        </label>
+        <label>Model <span class="required">*</span>
+          <input type="text" name="model" placeholder="e.g. F-150" required />
+        </label>
+        <label>Current Mileage (optional)
+          <input type="number" name="current_mileage" min="0" placeholder="e.g. 45000" />
+        </label>
+
+        <div class="interval-toggle">
+          <label class="radio-label">
+            <input type="radio" name="interval_mode" value="default" checked />
+            Use default service intervals
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="interval_mode" value="custom" />
+            Customize intervals
+          </label>
+        </div>
+
+        <div id="custom-intervals" class="hidden">
+          <div id="custom-intervals-grid" class="custom-intervals-grid"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="btn-cancel-vehicle">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Log Service -->
+  <div id="modal-service" class="modal hidden">
+    <div class="modal-box">
+      <h3>Log a Service</h3>
+      <form id="form-service">
+        <div class="form-field">
+          <span class="form-label">Service Types <span class="required">*</span></span>
+          <div id="service-type-list" class="service-type-list"></div>
+        </div>
+        <label>Mileage at Service <span class="required">*</span>
+          <input type="number" name="mileage" min="0" required placeholder="e.g. 45000" />
+        </label>
+        <label>Date of Service <span class="required">*</span>
+          <input type="date" name="service_date" required />
+        </label>
+        <label>Notes
+          <input type="text" name="notes" placeholder="Optional notes" />
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="btn-cancel-service">Cancel</button>
+          <button type="submit" class="btn btn-primary">Log Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Confirm Delete -->
+  <div id="modal-confirm" class="modal hidden">
+    <div class="modal-box modal-box-sm">
+      <h3 id="confirm-title">Are you sure?</h3>
+      <p id="confirm-message"></p>
+      <div class="modal-actions">
+        <button class="btn btn-outline" id="btn-confirm-cancel">Cancel</button>
+        <button class="btn btn-danger" id="btn-confirm-ok">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Settings -->
+  <div id="modal-settings" class="modal hidden">
+    <div class="modal-box modal-box-lg">
+      <h3>Settings</h3>
+      <div class="settings-section-header">
+        <div>
+          <div class="settings-section-title">Default Service Intervals</div>
+          <div class="settings-section-desc">Applied to all vehicles that use default intervals.</div>
+        </div>
+        <button type="button" class="btn btn-outline" id="btn-reset-intervals">Reset to Defaults</button>
+      </div>
+      <div id="settings-intervals-grid" class="custom-intervals-grid"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="btn-cancel-settings">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btn-save-settings">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

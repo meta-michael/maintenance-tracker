@@ -1,0 +1,22 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('api', {
+  getVehicles:         ()     => ipcRenderer.invoke('get-vehicles'),
+  createVehicle:       (data) => ipcRenderer.invoke('create-vehicle', data),
+  updateVehicle:       (data) => ipcRenderer.invoke('update-vehicle', data),
+  deleteVehicle:       (id)   => ipcRenderer.invoke('delete-vehicle', id),
+  getServiceTypes:      ()          => ipcRenderer.invoke('get-service-types'),
+  getVehicleIntervals:  (id)        => ipcRenderer.invoke('get-vehicle-intervals', id),
+  getDefaultIntervals:  ()          => ipcRenderer.invoke('get-default-intervals'),
+  setDefaultIntervals:  (intervals) => ipcRenderer.invoke('set-default-intervals', intervals),
+  getServiceLogs:      (id)   => ipcRenderer.invoke('get-service-logs', id),
+  createServiceLog:    (data) => ipcRenderer.invoke('create-service-log', data),
+  deleteServiceLog:    (id)   => ipcRenderer.invoke('delete-service-log', id),
+  getUpcoming:         (id)   => ipcRenderer.invoke('get-upcoming', id),
+  exportIcs:           (vehicle, upcoming) => ipcRenderer.invoke('export-ics', { vehicle, upcoming }),
+  getGoogleStatus:     ()          => ipcRenderer.invoke('get-google-status'),
+  connectGoogle:       ()          => ipcRenderer.invoke('connect-google'),
+  disconnectGoogle:    ()          => ipcRenderer.invoke('disconnect-google'),
+  syncToCalendar:      (vehicleId) => ipcRenderer.invoke('sync-to-calendar', vehicleId),
+  openExternal:        (url)       => ipcRenderer.invoke('open-external', url),
+});
