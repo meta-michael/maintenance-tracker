@@ -2,15 +2,38 @@
   "name": "maintenance-tracker",
   "version": "1.0.0",
   "description": "Vehicle maintenance tracker",
+  "author": "meta-michael",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.meta-michael.maintenance-tracker",
+    "productName": "Maintenance Tracker",
+    "win": {
+      "target": "nsis"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "database.js",
+      "calendar.js",
+      "renderer/**"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/sql.js/dist/sql-wasm.wasm",
+        "to": "sql-wasm.wasm"
+      }
+    ]
   },
   "dependencies": {
     "googleapis": "^171.4.0",
     "sql.js": "^1.11.0"
   },
   "devDependencies": {
-    "electron": "^31.0.0"
+    "electron": "^31.0.0",
+    "electron-builder": "^25.1.8"
   }
 }
