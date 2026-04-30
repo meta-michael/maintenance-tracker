@@ -1,4 +1,5 @@
 node_modules/
+dist/
 maintenance.db
 google-credentials.json
 .claude/

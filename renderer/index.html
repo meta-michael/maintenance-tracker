@@ -192,6 +192,20 @@
         <button type="button" class="btn btn-outline" id="btn-reset-intervals">Reset to Defaults</button>
       </div>
       <div id="settings-intervals-grid" class="custom-intervals-grid"></div>
+
+      <div class="settings-section-header" style="margin-top: 16px">
+        <div>
+          <div class="settings-section-title">Custom Services</div>
+          <div class="settings-section-desc">Add service types specific to your vehicles.</div>
+        </div>
+      </div>
+      <div id="custom-services-list"></div>
+      <form id="form-add-custom-service" class="add-custom-service-form">
+        <input type="text" id="custom-service-name" placeholder="e.g. Differential Fluid" />
+        <input type="number" id="custom-service-miles" placeholder="Miles interval" min="1" />
+        <button type="submit" class="btn btn-outline">+ Add</button>
+      </form>
+
       <div class="modal-actions">
         <button type="button" class="btn btn-outline" id="btn-cancel-settings">Cancel</button>
         <button type="button" class="btn btn-primary" id="btn-save-settings">Save</button>

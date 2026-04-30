@@ -99,6 +99,11 @@ async function initDb() {
       service_type TEXT PRIMARY KEY,
       interval_miles INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS custom_service_types (
+      key TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      miles INTEGER NOT NULL
+    );
   `);
   // Additive migration for existing databases
   try { db.exec('ALTER TABLE vehicles ADD COLUMN current_mileage INTEGER'); } catch (_) {}
@@ -177,16 +182,23 @@ function getVehicleIntervals(vehicleId) {
     'SELECT service_type, interval_miles FROM vehicle_service_intervals WHERE vehicle_id = ?',
     [vehicleId]
   );
-  const custom = {};
-  for (const row of rows) custom[row.service_type] = row.interval_miles;
+  const perVehicle = {};
+  for (const row of rows) perVehicle[row.service_type] = row.interval_miles;
 
   const defaultMiles = getDefaultIntervals();
   const result = {};
   for (const [key, info] of Object.entries(DEFAULT_INTERVALS)) {
     result[key] = {
       name: info.name,
-      miles: custom[key] ?? defaultMiles[key],
-      is_custom: key in custom,
+      miles: perVehicle[key] ?? defaultMiles[key],
+      is_custom: key in perVehicle,
+    };
+  }
+  for (const ct of getCustomServiceTypes()) {
+    result[ct.key] = {
+      name: ct.name,
+      miles: perVehicle[ct.key] ?? ct.miles,
+      is_custom: ct.key in perVehicle,
     };
   }
   return result;
@@ -207,6 +219,30 @@ function setVehicleIntervals(vehicleId, intervals) {
     db.exec('ROLLBACK');
     throw e;
   }
+  save();
+}
+
+// ── Custom Service Types ──────────────────────────────────────────────────────
+
+function getCustomServiceTypes() {
+  return all('SELECT key, name, miles FROM custom_service_types ORDER BY name');
+}
+
+function addCustomServiceType(name, miles) {
+  const key = 'custom_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  if (one('SELECT key FROM custom_service_types WHERE key = ?', [key])) {
+    throw new Error(`A custom service named "${name}" already exists.`);
+  }
+
+  run('INSERT INTO custom_service_types (key, name, miles) VALUES (?, ?, ?)', [key, name, miles]);
+  save();
+
+  return { key, name, miles };
+}
+
+function deleteCustomServiceType(key) {
+  run('DELETE FROM vehicle_service_intervals WHERE service_type = ?', [key]);
+  run('DELETE FROM custom_service_types WHERE key = ?', [key]);
   save();
 }
 
@@ -324,6 +360,9 @@ module.exports = {
   setDefaultIntervals,
   getVehicleIntervals,
   setVehicleIntervals,
+  getCustomServiceTypes,
+  addCustomServiceType,
+  deleteCustomServiceType,
   getServiceLogs,
   createServiceLog,
   deleteServiceLog,

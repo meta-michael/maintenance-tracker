@@ -662,6 +662,31 @@ form input:focus, form select:focus { border-color: var(--primary); }
   color: var(--muted);
 }
 
+/* ── Custom service list ── */
+.custom-service-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+
+.custom-service-item:last-child { border-bottom: none; }
+
+.custom-service-item span:first-child { flex: 1; }
+
+.add-custom-service-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.add-custom-service-form input[type="text"] { flex: 1; min-width: 0; }
+
+.add-custom-service-form input[type="number"] { width: 130px; }
+
 /* ── Service type checklist ── */
 .form-field {
   display: flex;

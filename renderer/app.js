@@ -338,11 +338,14 @@ async function openVehicleModal(vehicle = null) {
 
 // ── Settings modal ────────────────────────────────────────────────────────────
 async function openSettingsModal() {
-  const defaults = await window.api.getDefaultIntervals();
+  const [defaults, customTypes] = await Promise.all([
+    window.api.getDefaultIntervals(),
+    window.api.getCustomServiceTypes(),
+  ]);
 
   const grid = document.getElementById('settings-intervals-grid');
   grid.innerHTML = '';
-  state.serviceTypes.forEach(st => {
+  state.serviceTypes.filter(st => !st.key.startsWith('custom_')).forEach(st => {
     const miles = defaults[st.key] ?? st.miles;
     const row = document.createElement('div');
     row.className = 'interval-row';
@@ -357,7 +360,49 @@ async function openSettingsModal() {
     grid.appendChild(row);
   });
 
+  renderCustomServicesList(customTypes);
   openModal('modal-settings');
+}
+
+function renderCustomServicesList(customTypes) {
+  const list = document.getElementById('custom-services-list');
+  list.innerHTML = '';
+  if (customTypes.length === 0) {
+    list.innerHTML = '<p class="muted" style="font-size:0.85rem; margin: 8px 0 12px">No custom services added yet.</p>';
+    return;
+  }
+  customTypes.forEach(ct => {
+    const item = document.createElement('div');
+    item.className = 'custom-service-item';
+    item.innerHTML = `
+      <span>${esc(ct.name)}</span>
+      <span class="muted">every ${ct.miles.toLocaleString()} mi</span>
+      <button class="btn btn-danger-outline del-custom-btn" data-key="${esc(ct.key)}">Remove</button>
+    `;
+    list.appendChild(item);
+  });
+  list.querySelectorAll('.del-custom-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.key;
+      const name = customTypes.find(ct => ct.key === key)?.name || key;
+      confirm(
+        'Remove custom service?',
+        `"${name}" will no longer appear for any vehicle. Existing service history is kept.`,
+        async () => {
+          await window.api.deleteCustomServiceType(key);
+          state.serviceTypes = await window.api.getServiceTypes();
+          if (state.currentVehicle) {
+            state.vehicleIntervals = await window.api.getVehicleIntervals(state.currentVehicle.id);
+            populateServiceTypes();
+            await refreshVehicleDetail();
+          }
+          const updated = await window.api.getCustomServiceTypes();
+          renderCustomServicesList(updated);
+          toast('Custom service removed', 'info');
+        }
+      );
+    });
+  });
 }
 
 // ── Service modal ─────────────────────────────────────────────────────────────
@@ -493,6 +538,34 @@ function wire() {
   document.getElementById('btn-settings').addEventListener('click', openSettingsModal);
 
   document.getElementById('btn-cancel-settings').addEventListener('click', () => closeModal('modal-settings'));
+
+  document.getElementById('form-add-custom-service').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nameInput = document.getElementById('custom-service-name');
+    const milesInput = document.getElementById('custom-service-miles');
+    const name = nameInput.value.trim();
+    const miles = parseInt(milesInput.value);
+    if (!name || isNaN(miles) || miles < 1) {
+      toast('Enter a service name and interval', 'error');
+      return;
+    }
+    try {
+      await window.api.addCustomServiceType({ name, miles });
+      state.serviceTypes = await window.api.getServiceTypes();
+      if (state.currentVehicle) {
+        state.vehicleIntervals = await window.api.getVehicleIntervals(state.currentVehicle.id);
+        populateServiceTypes();
+        await refreshVehicleDetail();
+      }
+      const updated = await window.api.getCustomServiceTypes();
+      renderCustomServicesList(updated);
+      nameInput.value = '';
+      milesInput.value = '';
+      toast(`"${name}" added`, 'success');
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  });
 
   document.getElementById('btn-reset-intervals').addEventListener('click', () => {
     document.querySelectorAll('.settings-interval-input').forEach(input => {

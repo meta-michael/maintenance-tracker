@@ -55,15 +55,22 @@ ipcMain.handle('delete-vehicle', (_, id) => {
 
 // ── Service Intervals ─────────────────────────────────────────────────────────
 
-ipcMain.handle('get-service-types', () =>
-  Object.entries(db.DEFAULT_INTERVALS).map(([key, v]) => ({ key, name: v.name, miles: v.miles }))
-);
+ipcMain.handle('get-service-types', () => [
+  ...Object.entries(db.DEFAULT_INTERVALS).map(([key, v]) => ({ key, name: v.name, miles: v.miles })),
+  ...db.getCustomServiceTypes(),
+]);
 
 ipcMain.handle('get-vehicle-intervals', (_, vehicleId) => db.getVehicleIntervals(vehicleId));
 
 ipcMain.handle('get-default-intervals', () => db.getDefaultIntervals());
 
 ipcMain.handle('set-default-intervals', (_, intervals) => db.setDefaultIntervals(intervals));
+
+ipcMain.handle('get-custom-service-types', () => db.getCustomServiceTypes());
+
+ipcMain.handle('add-custom-service-type', (_, { name, miles }) => db.addCustomServiceType(name, miles));
+
+ipcMain.handle('delete-custom-service-type', (_, key) => db.deleteCustomServiceType(key));
 
 // ── Service Logs ──────────────────────────────────────────────────────────────
 
